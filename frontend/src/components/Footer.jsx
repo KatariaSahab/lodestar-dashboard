@@ -2,7 +2,7 @@
 import { FaGlobe } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import '../App.css';
-import CreatorEasterEgg from './CreatorEasterEgg';
+
 
 export default function Footer() {
   const { t } = useTranslation();
@@ -36,9 +36,7 @@ export default function Footer() {
 
 
         <div className="footer-credits">
-          <CreatorEasterEgg>
-            <span>{t('footer.credits')}</span>
-          </CreatorEasterEgg>
+          <span>{t('footer.credits')}</span>
         </div>
       </div>
     </footer>

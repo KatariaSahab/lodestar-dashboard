@@ -17,6 +17,8 @@ export default ({ mode }) => {
       'import.meta.env.VITE_BHUVAN_LULC_KEY': JSON.stringify(env.VITE_BHUVAN_LULC_KEY || ''),
       'import.meta.env.VITE_LODESTAR_BACKEND_URL': JSON.stringify(env.VITE_LODESTAR_BACKEND_URL || ''),
       'import.meta.env.VITE_WAKE_LAMBDA_URL': JSON.stringify(env.VITE_WAKE_LAMBDA_URL || ''),
+      'import.meta.env.VITE_BHOONIDHI_USER_ID': JSON.stringify(env.VITE_BHOONIDHI_USER_ID || ''),
+      'import.meta.env.VITE_BHOONIDHI_PASSWORD': JSON.stringify(env.VITE_BHOONIDHI_PASSWORD || ''),
     },
     server: {
       proxy: {
@@ -26,6 +28,20 @@ export default ({ mode }) => {
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/bhuvan-api/, ''),
+        },
+        // Proxy Bhoonidhi API calls to avoid CORS in dev
+        '/bhoonidhi-api': {
+          target: 'https://bhoonidhi-api.nrsc.gov.in',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/bhoonidhi-api/, ''),
+        },
+        // Proxy Bhoonidhi Media & STAC assets (images/metadata)
+        '/bhoonidhi-media': {
+          target: 'https://bhoonidhi.nrsc.gov.in',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/bhoonidhi-media/, ''),
         },
       },
     },
