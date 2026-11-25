@@ -7,7 +7,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
-import { FaMapMarkerAlt, FaCloudSunRain, FaTimes, FaLayerGroup, FaAngleDoubleLeft, FaAngleDoubleRight } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaCloudSunRain, FaTimes, FaLayerGroup, FaAngleDoubleLeft, FaAngleDoubleRight, FaSatellite } from 'react-icons/fa';
 import { kml as kmlToGeoJSON } from '@tmcw/togeojson';
 import { useTranslation } from 'react-i18next';
 import '../App.css';
@@ -16,6 +16,7 @@ import sensorConfig from '../data/sensors.config.json';
 import { testSensor, fetchSensorData, getRangeTimestamps, clearSensorCache } from '../services/sensorApi';
 import NetherlandsVisualsModal from '../components/NetherlandsVisualsModal';
 import NetherlandsTimeSlider from '../components/NetherlandsTimeSlider';
+import BhoonidhiModal from '../components/BhoonidhiModal';
 import { parseGeoTiff } from '../utils/tiffParser';
 
 const formatShortDate = (dateStr) => {
@@ -203,6 +204,30 @@ export default function Maps() {
   const [sensorStatusLog, setSensorStatusLog] = useState([]);
   const [showNlModal, setShowNlModal] = useState(false);
   const [showNlRasterPanel, setShowNlRasterPanel] = useState(false);
+  const [showBhoonidhiModal, setShowBhoonidhiModal] = useState(false);
+  const [bhoonidhiOverlay, setBhoonidhiOverlay] = useState(null);
+  const [bhoonidhiOpacity, setBhoonidhiOpacity] = useState(0.85);
+
+  const removeBhoonidhiOverlay = useCallback(() => {
+    const map = mapRef.current;
+    if (map) {
+      if (map.getLayer('bhoonidhi-footprint-outline')) map.removeLayer('bhoonidhi-footprint-outline');
+      if (map.getLayer('bhoonidhi-image-layer')) map.removeLayer('bhoonidhi-image-layer');
+      if (map.getSource('bhoonidhi-image-source')) map.removeSource('bhoonidhi-image-source');
+      if (map.getLayer('bhoonidhi-footprint-layer')) map.removeLayer('bhoonidhi-footprint-layer');
+      if (map.getSource('bhoonidhi-footprint-source')) map.removeSource('bhoonidhi-footprint-source');
+    }
+    setBhoonidhiOverlay(null);
+  }, []);
+
+  const handleBhoonidhiOpacityChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setBhoonidhiOpacity(val);
+    const map = mapRef.current;
+    if (map && map.getLayer('bhoonidhi-image-layer')) {
+      map.setPaintProperty('bhoonidhi-image-layer', 'raster-opacity', val);
+    }
+  };
 
   // Enhanced CSV Export Helper with Separated Date/Time, UTF-8 BOM, & Excel Compatibility
   const exportSensorCSV = (sensor, data, rangeKey = '24h') => {
@@ -956,6 +981,19 @@ export default function Maps() {
           </div>
         )}
 
+        {/* ISRO Bhoonidhi Satellite STAC Catalog */}
+        {INDIA_SITES.includes(activeSite) && (
+          <div className="control-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+            <button
+              className={`map-control-btn ${showBhoonidhiModal ? 'active' : ''}`}
+              onClick={() => setShowBhoonidhiModal(true)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+            >
+              <FaSatellite /> {t('maps.bhoonidhi_catalog', 'ISRO Bhoonidhi Catalog')}
+            </button>
+          </div>
+        )}
+
         {/* Netherlands Specific Visuals */}
         {['Dordrecht', 'Geertruidenberg'].includes(activeSite) && (
           <>
@@ -1260,6 +1298,66 @@ export default function Maps() {
       )}
 
       <NetherlandsVisualsModal isOpen={showNlModal} onClose={() => setShowNlModal(false)} />
+
+      <BhoonidhiModal
+        isOpen={showBhoonidhiModal}
+        onClose={() => setShowBhoonidhiModal(false)}
+        activeSite={activeSite}
+        mapRef={mapRef}
+        onOverlayScene={(scene) => setBhoonidhiOverlay(scene)}
+      />
+
+      {bhoonidhiOverlay && (
+        <div className="bhoonidhi-map-floating-panel">
+          <div className="bhoonidhi-map-floating-header">
+            <div className="bhoonidhi-map-floating-title">
+              <span className="bhoonidhi-live-dot" />
+              <strong>ISRO Satellite Overlay: {bhoonidhiOverlay.properties?.satellite || 'EOS-04'}</strong>
+            </div>
+            <button
+              className="bhoonidhi-map-close-btn"
+              onClick={removeBhoonidhiOverlay}
+              title="Remove satellite image overlay from map"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="bhoonidhi-map-floating-body">
+            <div className="bhoonidhi-map-scene-meta">
+              <span>Scene ID:</span>
+              <strong title={bhoonidhiOverlay.id}>{bhoonidhiOverlay.id}</strong>
+            </div>
+            <div className="bhoonidhi-map-opacity-row">
+              <label>Overlay Opacity:</label>
+              <input
+                type="range"
+                min="0.1"
+                max="1"
+                step="0.05"
+                value={bhoonidhiOpacity}
+                onChange={handleBhoonidhiOpacityChange}
+              />
+              <span>{Math.round(bhoonidhiOpacity * 100)}%</span>
+            </div>
+            <div className="bhoonidhi-map-floating-actions">
+              <button
+                type="button"
+                className="bhoonidhi-map-mini-btn"
+                onClick={() => setShowBhoonidhiModal(true)}
+              >
+                🛰️ Change Scene
+              </button>
+              <button
+                type="button"
+                className="bhoonidhi-map-mini-btn danger"
+                onClick={removeBhoonidhiOverlay}
+              >
+                Clear Overlay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

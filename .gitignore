@@ -18,3 +18,15 @@ frontend/bhuvan_parsed*
 frontend/test_*.js
 frontend/prefetch_lulc.js
 frontend/guwahati.html
+
+# Easter egg moved to root
+/CreatorEasterEgg.*
+/CreatorEasterEgg.jsx
+/CreatorEasterEgg.css
+
+# Root Markdown files (ignore all except README.md)
+/*.md
+/*.MD
+!/README.md
+
+ssh_keys.txt
