@@ -864,7 +864,7 @@ export default function Maps() {
   return (
     <div className="map-page-wrapper">
       <div className="map-top-bar">
-        <div className="map-logo">{t('maps.title', 'LODESTAR Geo-Dashboard')}</div>
+        <div className="map-logo">{t('maps.title', 'LODESTAR Dashboard')}</div>
         <select className="site-selector" onChange={(e) => handleSiteSelect(e.target.value)} value={activeSite || ""}>
           <option value="">{t('maps.select_site', '-- Select a Study Site --')}</option>
           {Object.keys(studySites).map((s) => (
